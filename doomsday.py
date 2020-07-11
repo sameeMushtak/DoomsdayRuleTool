@@ -2,9 +2,6 @@ import random
 import time
 import sys
 
-# Add Settings to the Main Menu
-    # Year Ranges
-    # What Else?
 # Calculate statistics (percent correct, average time) for last n attempts
 # Leaderboard of record times
 # Code assumes existence of a doomsday_stats.csv file with header row already existing
@@ -12,6 +9,11 @@ import sys
 days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 months = ["January", "February", "March", "April", "May", "June",\
         "July", "August", "September", "October", "November", "December"]
+
+# These three variables can be modified by the 'settings' function
+min_year = 1583
+max_year = 2500
+saving = True
 
 # Assumes that a valid date is passed in.
 # BCE is probably problematic.
@@ -28,27 +30,46 @@ def day_of_the_week(year, month, day):
 def eng_date(year, month, day):
     return f"{months[month-1]} {day}, {year}"
 
-def main_menu():
-    print("Begin Practice [p]")
-    print("View Statistics [v]")
-    print("Reset Statistics [r]")
-    print("Tutorial [t]")
-    print("Exit [e]")
-    # Consider consequences of having this always be true
+def practice():
     while True:
-        next_page = input()
-        if next_page.lower() == "p":
-            practice()
-        elif next_page.lower() == "v":
-            view_stats()
-        elif next_page.lower() == "r":
-            reset_stats()
-        elif next_page.lower() == "t":
-            tutorial()
-        elif next_page.lower() == "e":
-            exit_program()
-        else:
-            print("Invalid Option")
+        # Randomly generate a date
+        year = random.randint(min_year,max_year)
+        is_leapyear = (year%4 == 0) and ((year%100 != 0) or (year%400 == 0))
+        len_months = [31, 28+is_leapyear, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        month = random.randint(1,12)
+        day = random.randint(1,len_months[month-1])
+
+        # Display date
+        print(eng_date(year,month,day))
+        ans = day_of_the_week(year,month,day)
+        # Measuring time taken for user response
+        tic = time.perf_counter()
+        user_ans = int(input())
+        toc = time.perf_counter()
+        # Display answer and time
+        print(f"Correct Answer: {days[ans]} ({ans})")
+        print(f"Elapsed Time: {toc-tic:.1f} s")
+
+        # Store statistics in a file
+        is_correct = ans == user_ans
+        N = 0
+        if saving:
+            with open("doomsday_stats.csv", "r+") as f:
+                for line in f:
+                    N += 1
+                print(f"{N}, {is_correct}, {toc-tic:.3f}", file=f)
+
+        # Go to next page
+        while True:
+            next_page = input("Continue [c], Return to Main Menu [m], or Exit [e] ")
+            if next_page.lower() == "c":
+                break
+            elif next_page.lower() == "m":
+                return None
+            elif next_page.lower() == "e":
+                exit_program()
+            else:
+                print("Invalid Option")
 
 def view_stats():
     print("Statistics")
@@ -58,32 +79,21 @@ def view_stats():
     while True:
         next_page = input("Return to Main Menu [m], or Exit [e] ")
         if next_page.lower() == "m":
-            main_menu()
+            return None
         elif next_page.lower() == "e":
             exit_program()
         else:
             print("Invalid Option")
 
 def reset_stats():
-    while True:
-        confirm = input("Confirm reset statistics [y/n] ")
-        if confirm.lower() == "y":
-            with open("doomsday_stats.csv", "w") as f:
-                print("Problem Number, Correct?, Time (s)", file=f)
-            print("Statistics Reset")
-            break
-        else:
-            print("Returning to Main Menu")
-            main_menu()
-
-    while True:
-        next_page = input("Return to Main Menu [m], or Exit [e] ")
-        if next_page.lower() == "m":
-            main_menu()
-        elif next_page.lower() == "e":
-            exit_program()
-        else:
-            print("Invalid Option")
+    confirm = input("Confirm reset statistics [y/n] ")
+    if confirm.lower() == "y":
+        with open("doomsday_stats.csv", "w") as f:
+            print("Problem Number, Correct?, Time (s)", file=f)
+        print("Statistics Reset, Returning to Main Menu")
+    else:
+        print("Returning to Main Menu")
+    return None
 
 def tutorial():
     print("You will be presented with a date in the format Month Day, Year. Your task is to determine the day of the week on which that date occurred. Your answer should be a single-digit number as follows:")
@@ -97,44 +107,47 @@ def tutorial():
     while True:
         next_page = input("Return to Main Menu [m], or Exit [e] ")
         if next_page.lower() == "m":
-            main_menu()
+            return None
         elif next_page.lower() == "e":
             exit_program()
         else:
             print("Invalid Option")
 
-def practice():
-    # Randomly generate a date
-    year = random.randint(1500,2500)
-    is_leapyear = (year%4 == 0) and ((year%100 != 0) or (year%400 == 0))
-    len_months = [31, 28+is_leapyear, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    month = random.randint(1,12)
-    day = random.randint(1,len_months[month-1])
-
-    print(eng_date(year,month,day))
-    ans = day_of_the_week(year,month,day)
-    # Measuring time taken for user response
-    tic = time.perf_counter()
-    user_ans = int(input())
-    toc = time.perf_counter()
-    print(f"Correct Answer: {days[ans]} ({ans})")
-    print(f"Elapsed Time: {toc-tic:.1f} s")
-
-    # Store statistics in a file
-    is_correct = ans == user_ans
-    N = 0
-    with open("doomsday_stats.csv", "r+") as f:
-        for line in f:
-            N += 1
-        print(f"{N}, {is_correct}, {toc-tic:.3f}", file=f)
-
-    # Go to next page
+def settings():
+    global min_year
+    global max_year
+    global saving
     while True:
-        next_page = input("Continue [c], Return to Main Menu [m], or Exit [e] ")
-        if next_page.lower() == "c":
-            practice()
+        print("Settings")
+        print("Set range of years [s]")
+        print("Save results and times from practice [y/n]")
+        print("Return to Main Menu [m], or Exit [e]")
+        next_page = input()
+        if next_page.lower() == "s":
+            while True:
+                try:
+                    min_year = int(input("Minimum year?"))
+                    if min_year < 1583:
+                        raise ValueError
+                    break
+                except ValueError:
+                    print("The Gregorian calendar began in October 1582. Please input an integer that is at least 1583.")
+            while True:
+                try:
+                    max_year = int(input("Maximum year?"))
+                    if max_year < min_year:
+                        raise ValueError
+                    break
+                except ValueError:
+                    print(f"Please input a year greater than the minimum year ({min_year}).")
+        elif next_page.lower() == "y":
+            saving = True
+            print("Results and times will be saved")
+        elif next_page.lower() == "n":
+            saving = False
+            print("Results and times will not be saved")
         elif next_page.lower() == "m":
-            main_menu()
+            return None
         elif next_page.lower() == "e":
             exit_program()
         else:
@@ -143,4 +156,28 @@ def practice():
 def exit_program():
     sys.exit("Exiting.")
 
-main_menu()
+# Consider consequences of having this always be true
+while True:
+    print("Begin Practice [p]")
+    print("View Statistics [v]")
+    print("Reset Statistics [r]")
+    print("Tutorial [t]")
+    print("Settings [s]")
+    print("Exit [e]")
+    print(f"Year Range: {min_year}-{max_year}")
+    print(f"Saving: {saving}")
+    next_page = input()
+    if next_page.lower() == "p":
+        practice()
+    elif next_page.lower() == "v":
+        view_stats()
+    elif next_page.lower() == "r":
+        reset_stats()
+    elif next_page.lower() == "t":
+        tutorial()
+    elif next_page.lower() == "s":
+        settings()
+    elif next_page.lower() == "e":
+        exit_program()
+    else:
+        print("Invalid Option")

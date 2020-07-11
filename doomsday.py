@@ -10,10 +10,21 @@ days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Satur
 months = ["January", "February", "March", "April", "May", "June",\
         "July", "August", "September", "October", "November", "December"]
 
-# These three variables can be modified by the 'settings' function
-min_year = 1583
-max_year = 2500
-saving = True
+class Settings:
+    def __init__(self, min_year=1583, max_year=2500, saving=True):
+        self.min_year = min_year
+        self.max_year = max_year
+        self.saving = saving
+    def set_min_year(self, min_year):
+        self.min_year = min_year
+    def set_max_year(self, max_year):
+        self.max_year = max_year
+    def set_saving(self, saving):
+        self.saving = saving
+    def saving_string(self):
+        return "On" if self.saving else "Off"
+
+config = Settings()
 
 # Assumes that a valid date is passed in.
 # BCE is probably problematic.
@@ -33,7 +44,7 @@ def eng_date(year, month, day):
 def practice():
     while True:
         # Randomly generate a date
-        year = random.randint(min_year,max_year)
+        year = random.randint(config.min_year,config.max_year)
         is_leapyear = (year%4 == 0) and ((year%100 != 0) or (year%400 == 0))
         len_months = [31, 28+is_leapyear, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         month = random.randint(1,12)
@@ -53,7 +64,7 @@ def practice():
         # Store statistics in a file
         is_correct = ans == user_ans
         N = 0
-        if saving:
+        if config.saving:
             with open("doomsday_stats.csv", "r+") as f:
                 for line in f:
                     N += 1
@@ -114,9 +125,6 @@ def tutorial():
             print("Invalid Option")
 
 def settings():
-    global min_year
-    global max_year
-    global saving
     while True:
         print("Settings")
         print("Set range of years [s]")
@@ -126,25 +134,27 @@ def settings():
         if next_page.lower() == "s":
             while True:
                 try:
-                    min_year = int(input("Minimum year?"))
-                    if min_year < 1583:
+                    # min_year = int(input("Minimum year?"))
+                    config.set_min_year(int(input("Minimum year?")))
+                    if config.min_year < 1583:
                         raise ValueError
                     break
                 except ValueError:
                     print("The Gregorian calendar began in October 1582. Please input an integer that is at least 1583.")
             while True:
                 try:
-                    max_year = int(input("Maximum year?"))
-                    if max_year < min_year:
+                    config.set_max_year(int(input("Maximum year?")))
+                    # max_year = int(input("Maximum year?"))
+                    if config.max_year < config.min_year:
                         raise ValueError
                     break
                 except ValueError:
-                    print(f"Please input a year greater than the minimum year ({min_year}).")
+                    print(f"Please input a year greater than the minimum year ({config.min_year}).")
         elif next_page.lower() == "y":
-            saving = True
+            config.set_saving(True)
             print("Results and times will be saved")
         elif next_page.lower() == "n":
-            saving = False
+            config.set_saving(False)
             print("Results and times will not be saved")
         elif next_page.lower() == "m":
             return None
@@ -164,8 +174,8 @@ while True:
     print("Tutorial [t]")
     print("Settings [s]")
     print("Exit [e]")
-    print(f"Year Range: {min_year}-{max_year}")
-    print(f"Saving: {saving}")
+    print(f"Year Range: {config.min_year}-{config.max_year}")
+    print(f"Saving: {config.saving_string()}")
     next_page = input()
     if next_page.lower() == "p":
         practice()

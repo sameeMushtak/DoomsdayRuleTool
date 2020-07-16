@@ -9,16 +9,19 @@ months = ["January", "February", "March", "April", "May", "June",\
 
 # Class to hold values that can be changed during runtime from settings menu
 class Settings:
-    def __init__(self, min_year=1583, max_year=2500, saving=True):
+    def __init__(self, min_year=1583, max_year=2500, saving=True, calendar="Gregorian"):
         self.min_year = min_year
         self.max_year = max_year
         self.saving = saving
+        self.calendar = calendar
     def set_min_year(self, min_year):
         self.min_year = min_year
     def set_max_year(self, max_year):
         self.max_year = max_year
     def set_saving(self, saving):
         self.saving = saving
+    def set_calendar(self, calendar):
+        self.calendar = calendar
     def saving_string(self):
         return "On" if self.saving else "Off"
 
@@ -33,6 +36,9 @@ def get_max_year():
 def get_saving():
     return config.saving_string()
 
+def get_calendar():
+    return config.calendar
+
 def is_leap(year):
     return (year%4 == 0) and ((year%100 != 0) or (year%400 == 0))
 
@@ -42,14 +48,16 @@ def days_in_month(year,month):
     return len_months[month-1]
 
 # Assumes year, month, and day are integers
-def valid_date(year,month,day,min_year=0):
-    return year > min_year and month >= 1 and month <= 12 and day >= 1 and day <= days_in_month(year,month)
+def valid_date(year,month,day):
+    return year > 0 and month >= 1 and month <= 12 and day >= 1 and day <= days_in_month(year,month)
 
 # Assumes that a valid date is passed in.
 # BCE is probably problematic.
 def day_of_the_week(year, month, day):
-    # return date(year,month,day).isoweekday() % 7
-    anchor = 2 + year + (year // 4) - (year // 100) + (year // 400)
+    if config.calendar == "Gregorian":
+        anchor = 2 + year + (year // 4) - (year // 100) + (year // 400)
+    elif config.calendar == "Julian":
+        anchor = year + year // 4
     day_zero = [4, 0, 0, 3, 5, 1, 3, 6, 2, 4, 0, 2]
     if is_leap(year):
         day_zero[0] = 3
@@ -129,7 +137,7 @@ def calendar():
         try:
             date_str = input("Enter a date in YYYY-MM-DD or DD/MM/YYYY format. ")
             year, month, day = parse_date(date_str)
-            if not valid_date(year,month,day,1538):
+            if not valid_date(year,month,day):
                 raise ValueError
             print(day_of_the_week(year,month,day))
         except TypeError:
@@ -196,6 +204,7 @@ def settings():
     while True:
         print("Settings")
         print("Set range of years [s]")
+        print("Set calendar [c]")
         print("Save results and times from practice [y/n]")
         print("Return to Main Menu [m], or Exit [e]")
         next_page = input()
@@ -208,7 +217,7 @@ def settings():
                         raise ValueError
                     break
                 except ValueError:
-                    print("The Gregorian calendar began in October 1582. Please input an integer that is at least 1583.")
+                    print("Please input a positive integer for the year.")
             while True:
                 try:
                     config.set_max_year(int(input("Maximum year? ")))
@@ -217,6 +226,24 @@ def settings():
                     break
                 except ValueError:
                     print(f"Please input a year greater than the minimum year ({config.min_year}).")
+        # Sets calendar to Gregorian or Julian
+        elif next_page.lower() == "c":
+            print("Set calendar to Gregorian [g] or Julian [j]?")
+            while True:
+                try:
+                    calendar = input()
+                    if calendar.lower() == "g":
+                        config.set_calendar("Gregorian")
+                        print("Calendar set to (proleptic) Gregorian")
+                        break
+                    elif calendar.lower() == "j":
+                        config.set_calendar("Julian")
+                        print("Calendar set to (proleptic) Julian")
+                        break
+                    else:
+                        raise ValueError
+                except ValueError:
+                    print("Invalid Input")
         # Setting whether saving will occur
         elif next_page.lower() == "y":
             config.set_saving(True)

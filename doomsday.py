@@ -4,7 +4,6 @@ import doomsday_funcs as df
 # Leaderboard of record times
 # Code assumes existence of a doomsday_stats.csv file with header row already existing
 
-# Consider consequences of having this always be true
 while True:
     print("Begin Practice [p]")
     print("Calendar [c]")
@@ -15,6 +14,7 @@ while True:
     print("Exit [e]")
     print(f"Year Range: {df.get_min_year()}-{df.get_max_year()}")
     print(f"Saving: {df.get_saving()}")
+    print(f"Calendar: {df.get_calendar()}")
     next_page = input()
     if next_page.lower() == "p":
         df.practice()
